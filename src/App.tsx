@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import type { GameMode, Direction, GameState, HistoryState, TileLevel } from './types';
 import { initGrid, addRandomTile, moveGrid, canMove, hasReachedLevel, cloneGrid } from './gameLogic';
 import { getModeConfig, modeConfigs } from './modeConfigs';
@@ -32,10 +32,44 @@ function App() {
     getModeRecord(currentMode)
   );
 
-  // 切换模式时重置游戏
-  useEffect(() => {
-    resetGame();
-    setHighRecord(getModeRecord(currentMode));
+  // Loading 动画
+  const [isModeSwitching, setIsModeSwitching] = useState(false);
+
+  // 无效操作震动
+  const [isShaking, setIsShaking] = useState(false);
+  const shakeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 重新开始确认弹窗
+  const [showRestartConfirm, setShowRestartConfirm] = useState(false);
+
+  // 新出现的方块 ID（用于出现动画）
+  const [newTileIds, setNewTileIds] = useState<Set<string>>(new Set());
+  // 合并的方块 ID（用于合并动画）
+  const [mergedTileIds, setMergedTileIds] = useState<Set<string>>(new Set());
+
+  // 切换模式时重置游戏（带 Loading 动画）
+  const handleModeSwitch = useCallback((newMode: GameMode) => {
+    if (newMode === currentMode) return;
+    setIsModeSwitching(true);
+    setTimeout(() => {
+      setCurrentMode(newMode);
+      const grid = initGrid();
+      const config = getModeConfig(newMode);
+      addRandomTile(grid, config.spawnLevelRange[0], config.spawnLevelRange[1]);
+      addRandomTile(grid, config.spawnLevelRange[0], config.spawnLevelRange[1]);
+      setGameState({
+        grid,
+        score: 0,
+        isGameOver: false,
+        isWon: false,
+        canContinue: false,
+      });
+      setHistory([]);
+      setHighRecord(getModeRecord(newMode));
+      setNewTileIds(new Set());
+      setMergedTileIds(new Set());
+      setTimeout(() => setIsModeSwitching(false), 300);
+    }, 400);
   }, [currentMode]);
 
   // 初始化游戏
@@ -52,7 +86,23 @@ function App() {
       canContinue: false,
     });
     setHistory([]);
+    setNewTileIds(new Set());
+    setMergedTileIds(new Set());
   }, [currentMode]);
+
+  // 带确认的重新开始
+  const handleRestartClick = useCallback(() => {
+    setShowRestartConfirm(true);
+  }, []);
+
+  const confirmRestart = useCallback(() => {
+    setShowRestartConfirm(false);
+    resetGame();
+  }, [resetGame]);
+
+  const cancelRestart = useCallback(() => {
+    setShowRestartConfirm(false);
+  }, []);
 
   // 撤销上一步
   const undoMove = useCallback(() => {
@@ -67,6 +117,13 @@ function App() {
     setHistory(prev => prev.slice(0, -1));
   }, [history, gameState.isGameOver]);
 
+  // 触发震动反馈
+  const triggerShake = useCallback(() => {
+    setIsShaking(true);
+    if (shakeTimerRef.current) clearTimeout(shakeTimerRef.current);
+    shakeTimerRef.current = setTimeout(() => setIsShaking(false), 300);
+  }, []);
+
   // 处理移动
   const handleMove = useCallback(
     (direction: Direction) => {
@@ -76,7 +133,11 @@ function App() {
       const config = getModeConfig(currentMode);
       const result = moveGrid(gameState.grid, direction);
 
-      if (!result.moved) return;
+      if (!result.moved) {
+        // 无效操作 - 触发震动
+        triggerShake();
+        return;
+      }
 
       // 保存历史记录
       const newHistoryEntry: HistoryState = {
@@ -85,14 +146,14 @@ function App() {
       };
 
       // 添加新方块
-      addRandomTile(result.newGrid, config.spawnLevelRange[0], config.spawnLevelRange[1]);
+      const newTile = addRandomTile(result.newGrid, config.spawnLevelRange[0], config.spawnLevelRange[1]);
 
       // 计算新分数
       let newScore: number;
       if (config.recordType === 'score') {
         newScore = gameState.score + result.mergeScore;
       } else {
-        newScore = gameState.score + 1; // 回合数
+        newScore = gameState.score + 1;
       }
 
       // 检查胜利条件
@@ -112,6 +173,24 @@ function App() {
 
       setHistory(prev => [...prev, newHistoryEntry]);
 
+      // 设置新方块动画
+      const newIds = new Set<string>();
+      if (newTile) newIds.add(newTile.id);
+      setNewTileIds(newIds);
+
+      // 设置合并方块动画
+      const mergedIds = new Set<string>();
+      if (result.mergedCells) {
+        result.mergedCells.forEach(cell => mergedIds.add(cell.id));
+      }
+      setMergedTileIds(mergedIds);
+
+      // 清除动画标记
+      setTimeout(() => {
+        setNewTileIds(new Set());
+        setMergedTileIds(new Set());
+      }, 200);
+
       // 更新最高记录
       if (isGameOver || (isWon && !gameState.isWon)) {
         if (config.recordType === 'score') {
@@ -127,7 +206,7 @@ function App() {
         }
       }
     },
-    [gameState, currentMode, highRecord]
+    [gameState, currentMode, highRecord, triggerShake]
   );
 
   // 继续游戏（胜利后）
@@ -168,7 +247,7 @@ function App() {
     let touchStartY = 0;
     let touchEndX = 0;
     let touchEndY = 0;
-    const MIN_SWIPE_DISTANCE = 30; // 最小滑动距离（像素）
+    const MIN_SWIPE_DISTANCE = 30;
 
     const handleTouchStart = (e: TouchEvent) => {
       touchStartX = e.changedTouches[0].screenX;
@@ -192,7 +271,6 @@ function App() {
       }
     };
 
-    // 阻止页面在游戏区域滚动
     const handleTouchMove = (e: TouchEvent) => {
       e.preventDefault();
     };
@@ -220,10 +298,13 @@ function App() {
     const bgColor = cell ? modeConfig.getTileColor(level) : 'transparent';
     const textColor = cell ? modeConfig.getTextColor(level) : 'inherit';
 
+    const isNew = cell ? newTileIds.has(cell.id) : false;
+    const isMerged = cell ? mergedTileIds.has(cell.id) : false;
+
     return (
       <div
         key={cell ? cell.id : `empty-${row}-${col}`}
-        className={`tile ${cell ? 'tile-filled' : 'tile-empty'}`}
+        className={`tile ${cell ? 'tile-filled' : 'tile-empty'} ${isNew ? 'tile-new' : ''} ${isMerged ? 'tile-merged' : ''}`}
         style={{
           backgroundColor: bgColor,
           color: textColor,
@@ -241,6 +322,18 @@ function App() {
 
   return (
     <div className={`game-container mode-${currentMode}`}>
+      {/* Loading 遮罩 */}
+      {isModeSwitching && (
+        <div className="loading-overlay">
+          <div className="loading-spinner">
+            <div className="spinner-dot" />
+            <div className="spinner-dot" />
+            <div className="spinner-dot" />
+          </div>
+          <p className="loading-text">切换模式中...</p>
+        </div>
+      )}
+
       {/* 标题 */}
       <header className="game-header">
         <h1 className="game-title">
@@ -258,7 +351,7 @@ function App() {
             <button
               key={mode}
               className={`mode-btn ${currentMode === mode ? 'active' : ''}`}
-              onClick={() => setCurrentMode(mode)}
+              onClick={() => handleModeSwitch(mode)}
             >
               <span className="mode-emoji">{config.emoji}</span>
               <span className="mode-name">{config.name}</span>
@@ -290,13 +383,13 @@ function App() {
         >
           ↩️ 撤销
         </button>
-        <button className="control-btn restart-btn" onClick={resetGame}>
+        <button className="control-btn restart-btn" onClick={handleRestartClick}>
           🔄 重新开始
         </button>
       </div>
 
       {/* 游戏网格 */}
-      <div className="grid-container">
+      <div className={`grid-container ${isShaking ? 'grid-shake' : ''}`}>
         <div className="grid">
           {gameState.grid.map((row, i) =>
             row.map((cell, j) => renderTile(cell, i, j))
@@ -307,12 +400,20 @@ function App() {
         {gameState.isGameOver && (
           <div className="game-overlay">
             <div className="overlay-content">
-              <h2 className="overlay-title">😢 游戏结束</h2>
+              <div className="overlay-icon">😢</div>
+              <h2 className="overlay-title">游戏结束</h2>
               <p className="overlay-message">
-                {modeConfig.scoreLabel}：{gameState.score}
+                {modeConfig.scoreLabel}：<strong>{gameState.score}</strong>
+                {highRecord !== null && (
+                  <span className="overlay-record">
+                    {modeConfig.recordType === 'score'
+                      ? ` | 最高分：${highRecord}`
+                      : ` | 最佳回合：${highRecord}`}
+                  </span>
+                )}
               </p>
               <button className="overlay-btn" onClick={resetGame}>
-                再来一局
+                🔄 再来一局
               </button>
             </div>
           </div>
@@ -322,22 +423,45 @@ function App() {
         {gameState.isWon && !gameState.canContinue && (
           <div className="game-overlay win-overlay">
             <div className="overlay-content">
-              <h2 className="overlay-title">{modeConfig.winMessage}</h2>
+              <div className="overlay-icon">🎉</div>
+              <h2 className="overlay-title">恭喜！</h2>
               <p className="overlay-message">
-                {modeConfig.scoreLabel}：{gameState.score}
+                {modeConfig.winMessage}
+              </p>
+              <p className="overlay-message">
+                {modeConfig.scoreLabel}：<strong>{gameState.score}</strong>
               </p>
               <div className="overlay-buttons">
                 <button className="overlay-btn continue-btn" onClick={continueGame}>
-                  继续游戏
+                  ▶️ 继续挑战
                 </button>
                 <button className="overlay-btn" onClick={resetGame}>
-                  重新开始
+                  🔄 再来一局
                 </button>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/* 重新开始确认弹窗 */}
+      {showRestartConfirm && (
+        <div className="modal-backdrop" onClick={cancelRestart}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-icon">🤔</div>
+            <h3 className="modal-title">确定要重新开始吗？</h3>
+            <p className="modal-message">当前游戏进度将会丢失</p>
+            <div className="modal-buttons">
+              <button className="modal-btn cancel-btn" onClick={cancelRestart}>
+                取消
+              </button>
+              <button className="modal-btn confirm-btn" onClick={confirmRestart}>
+                确定重新开始
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 操作说明 */}
       <footer className="game-footer">

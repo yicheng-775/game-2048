@@ -38,20 +38,21 @@ export function getEmptyCells(grid: Grid): [number, number][] {
   return empty;
 }
 
-// 随机添加方块
+// 随机添加方块，返回新创建的 Cell（用于动画）
 export function addRandomTile(
   grid: Grid,
   minLevel: TileLevel,
   maxLevel: TileLevel
-): boolean {
+): Cell | null {
   const empty = getEmptyCells(grid);
-  if (empty.length === 0) return false;
+  if (empty.length === 0) return null;
 
   const [row, col] = empty[Math.floor(Math.random() * empty.length)];
   const levelRange = maxLevel - minLevel + 1;
   const level = (minLevel + Math.floor(Math.random() * levelRange)) as TileLevel;
-  grid[row][col] = createCell(level);
-  return true;
+  const cell = createCell(level);
+  grid[row][col] = cell;
+  return cell;
 }
 
 // 滑动一行（向左）
@@ -95,10 +96,12 @@ export function moveGrid(
   newGrid: Grid;
   moved: boolean;
   mergeScore: number;
+  mergedCells: Cell[];
 } {
   const newGrid = initGrid();
   let moved = false;
   let mergeScore = 0;
+  const mergedCells: Cell[] = [];
 
   if (direction === 'left') {
     for (let i = 0; i < 4; i++) {
@@ -145,7 +148,25 @@ export function moveGrid(
     }
   }
 
-  return { newGrid, moved, mergeScore };
+  // 收集合并的方块：对比新旧网格，找出新网格中新增的、等级更高的方块
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 4; j++) {
+      const newCell = newGrid[i][j];
+      if (!newCell) continue;
+      const oldCell = grid[i][j];
+      // 如果旧位置为空或等级不同，且新方块等级 > 1，可能是合并产生的
+      if (!oldCell || oldCell.level !== newCell.level) {
+        // 检查这个方块是否是合并产生的（等级比原来的高）
+        const origLevel = newCell.level - 1;
+        const origCells = grid.flat().filter(c => c && c.level === origLevel);
+        if (origCells.length >= 2) {
+          mergedCells.push(newCell);
+        }
+      }
+    }
+  }
+
+  return { newGrid, moved, mergeScore, mergedCells };
 }
 
 // 检查是否可以移动
