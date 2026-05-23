@@ -162,6 +162,57 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleMove]);
 
+  // 触摸滑动事件处理（手机支持）
+  useEffect(() => {
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchEndX = 0;
+    let touchEndY = 0;
+    const MIN_SWIPE_DISTANCE = 30; // 最小滑动距离（像素）
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.changedTouches[0].screenX;
+      touchStartY = e.changedTouches[0].screenY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      touchEndX = e.changedTouches[0].screenX;
+      touchEndY = e.changedTouches[0].screenY;
+      const dx = touchEndX - touchStartX;
+      const dy = touchEndY - touchStartY;
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (Math.max(absDx, absDy) < MIN_SWIPE_DISTANCE) return;
+
+      if (absDx > absDy) {
+        handleMove(dx > 0 ? 'right' : 'left');
+      } else {
+        handleMove(dy > 0 ? 'down' : 'up');
+      }
+    };
+
+    // 阻止页面在游戏区域滚动
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+
+    const gridEl = document.querySelector('.grid-container');
+    if (gridEl) {
+      gridEl.addEventListener('touchstart', handleTouchStart, { passive: true });
+      gridEl.addEventListener('touchend', handleTouchEnd, { passive: true });
+      gridEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+    }
+
+    return () => {
+      if (gridEl) {
+        gridEl.removeEventListener('touchstart', handleTouchStart);
+        gridEl.removeEventListener('touchend', handleTouchEnd);
+        gridEl.removeEventListener('touchmove', handleTouchMove);
+      }
+    };
+  }, [handleMove]);
+
   // 渲染方块
   const renderTile = (cell: { level: number; id: string } | null, row: number, col: number) => {
     const level = cell?.level as TileLevel;
@@ -290,7 +341,7 @@ function App() {
 
       {/* 操作说明 */}
       <footer className="game-footer">
-        <p>使用方向键 ↑↓←→ 移动方块</p>
+        <p>⌨️ 方向键 / 📱 滑动屏幕 移动方块</p>
         <p>相同内容碰撞合并，挑战最高记录！</p>
       </footer>
     </div>

@@ -4,16 +4,22 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html, body {
   font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
   background: #faf8ef;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 12px;
+  overflow: hidden;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 #root {
@@ -26,7 +32,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
 /* 头部 */
@@ -35,51 +41,57 @@ body {
 }
 
 .game-title {
-  font-size: 42px;
+  font-size: 38px;
   font-weight: bold;
   color: #776e65;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .title-icon {
-  font-size: 36px;
+  font-size: 32px;
 }
 
 .game-subtitle {
   color: #8f7a66;
   font-size: 14px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 /* 模式切换 */
 .mode-selector {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   background: #bbada0;
-  padding: 6px;
+  padding: 5px;
   border-radius: 10px;
+  width: 100%;
 }
 
 .mode-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 16px;
+  gap: 3px;
+  padding: 10px 12px;
   border: none;
   border-radius: 8px;
   background: transparent;
   cursor: pointer;
   transition: all 0.2s ease;
   color: #f9f6f2;
-  font-size: 12px;
+  font-size: 13px;
+  flex: 1;
 }
 
 .mode-btn:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.mode-btn:active {
+  transform: scale(0.96);
 }
 
 .mode-btn.active {
@@ -89,27 +101,28 @@ body {
 }
 
 .mode-emoji {
-  font-size: 24px;
+  font-size: 26px;
 }
 
 .mode-name {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 /* 统计信息 */
 .stats-container {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   width: 100%;
   justify-content: center;
 }
 
 .stat-box {
   background: #bbada0;
-  padding: 12px 24px;
+  padding: 10px 20px;
   border-radius: 8px;
   text-align: center;
-  min-width: 100px;
+  flex: 1;
+  max-width: 160px;
 }
 
 .stat-label {
@@ -118,12 +131,12 @@ body {
   color: #eee4da;
   text-transform: uppercase;
   font-weight: bold;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .stat-value {
   display: block;
-  font-size: 28px;
+  font-size: 26px;
   font-weight: bold;
   color: white;
 }
@@ -132,16 +145,22 @@ body {
 .controls {
   display: flex;
   gap: 10px;
+  width: 100%;
 }
 
 .control-btn {
-  padding: 10px 20px;
+  padding: 12px 20px;
   border: none;
-  border-radius: 6px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 15px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  flex: 1;
+}
+
+.control-btn:active {
+  transform: scale(0.96);
 }
 
 .undo-btn {
@@ -172,19 +191,22 @@ body {
 .grid-container {
   position: relative;
   background: #bbada0;
-  padding: 12px;
+  padding: 10px;
   border-radius: 10px;
+  width: 100%;
+  max-width: 420px;
+  touch-action: none;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap: 10px;
 }
 
 .tile {
-  width: 90px;
-  height: 90px;
+  width: 100%;
+  aspect-ratio: 1;
   border-radius: 6px;
   display: flex;
   justify-content: center;
@@ -204,19 +226,19 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
 }
 
 .tile-emoji {
-  font-size: 32px;
+  font-size: clamp(22px, 7vw, 34px);
   line-height: 1;
 }
 
 .tile-name {
-  font-size: 11px;
+  font-size: clamp(9px, 2.5vw, 12px);
   font-weight: bold;
   text-align: center;
-  max-width: 80px;
+  max-width: 90%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -235,6 +257,7 @@ body {
   justify-content: center;
   align-items: center;
   animation: fadeIn 0.3s ease;
+  z-index: 10;
 }
 
 .win-overlay {
@@ -252,10 +275,10 @@ body {
 }
 
 .overlay-title {
-  font-size: 36px;
+  font-size: clamp(24px, 7vw, 36px);
   font-weight: bold;
   color: #776e65;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .win-overlay .overlay-title {
@@ -263,9 +286,9 @@ body {
 }
 
 .overlay-message {
-  font-size: 18px;
+  font-size: clamp(14px, 4vw, 18px);
   color: #776e65;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .win-overlay .overlay-message {
@@ -274,20 +297,25 @@ body {
 
 .overlay-buttons {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .overlay-btn {
-  padding: 12px 24px;
+  padding: 14px 24px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: bold;
   cursor: pointer;
   background: #8f7a66;
   color: white;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+}
+
+.overlay-btn:active {
+  transform: scale(0.96);
 }
 
 .overlay-btn:hover {
@@ -311,35 +339,128 @@ body {
   line-height: 1.6;
 }
 
-/* 响应式 */
-@media (max-width: 500px) {
+/* ===== 移动端适配 ===== */
+@media (max-width: 480px) {
+  html, body {
+    padding: 8px;
+    align-items: flex-start;
+    padding-top: 8px;
+  }
+
+  .game-container {
+    gap: 8px;
+  }
+
   .game-title {
-    font-size: 32px;
+    font-size: 30px;
   }
 
-  .tile {
-    width: 70px;
-    height: 70px;
+  .title-icon {
+    font-size: 26px;
   }
 
-  .tile-emoji {
-    font-size: 24px;
+  .game-subtitle {
+    font-size: 12px;
   }
 
-  .tile-name {
-    font-size: 10px;
+  .mode-selector {
+    gap: 4px;
+    padding: 4px;
   }
 
   .mode-btn {
-    padding: 8px 12px;
+    padding: 8px 6px;
+    gap: 2px;
   }
 
   .mode-emoji {
-    font-size: 20px;
+    font-size: 22px;
   }
 
   .mode-name {
     font-size: 11px;
+  }
+
+  .stat-box {
+    padding: 8px 12px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+
+  .control-btn {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .grid-container {
+    padding: 8px;
+    border-radius: 8px;
+  }
+
+  .grid {
+    gap: 7px;
+  }
+
+  .tile {
+    border-radius: 5px;
+  }
+
+  .tile-emoji {
+    font-size: clamp(20px, 8vw, 30px);
+  }
+
+  .tile-name {
+    font-size: clamp(8px, 2.8vw, 11px);
+  }
+
+  .overlay-title {
+    font-size: 24px;
+  }
+
+  .overlay-message {
+    font-size: 14px;
+  }
+
+  .overlay-btn {
+    padding: 12px 20px;
+    font-size: 15px;
+  }
+
+  .game-footer {
+    font-size: 11px;
+  }
+}
+
+/* 超小屏幕 */
+@media (max-width: 340px) {
+  .game-title {
+    font-size: 26px;
+  }
+
+  .mode-emoji {
+    font-size: 18px;
+  }
+
+  .mode-name {
+    font-size: 10px;
+  }
+
+  .stat-value {
+    font-size: 20px;
+  }
+
+  .grid {
+    gap: 5px;
+  }
+
+  .grid-container {
+    padding: 6px;
   }
 }
 
