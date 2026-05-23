@@ -3,7 +3,7 @@
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
 // 游戏模式
-export type GameMode = 'classic' | 'fruit' | 'animal';
+export type GameMode = 'classic' | 'fruit' | 'animal' | 'space' | 'ocean' | 'emoji' | 'magic' | 'food';
 
 // 方块等级（1-12 对应不同内容）
 export type TileLevel = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
