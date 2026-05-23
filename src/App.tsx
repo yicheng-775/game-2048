@@ -197,18 +197,18 @@ function App() {
       e.preventDefault();
     };
 
-    const gridEl = document.querySelector('.grid-container');
+    const gridEl = document.querySelector('.grid-container') as HTMLElement | null;
     if (gridEl) {
-      gridEl.addEventListener('touchstart', handleTouchStart, { passive: true });
-      gridEl.addEventListener('touchend', handleTouchEnd, { passive: true });
-      gridEl.addEventListener('touchmove', handleTouchMove, { passive: false });
+      gridEl.addEventListener('touchstart', handleTouchStart as EventListener, { passive: true });
+      gridEl.addEventListener('touchend', handleTouchEnd as EventListener, { passive: true });
+      gridEl.addEventListener('touchmove', handleTouchMove as EventListener, { passive: false });
     }
 
     return () => {
       if (gridEl) {
-        gridEl.removeEventListener('touchstart', handleTouchStart);
-        gridEl.removeEventListener('touchend', handleTouchEnd);
-        gridEl.removeEventListener('touchmove', handleTouchMove);
+        gridEl.removeEventListener('touchstart', handleTouchStart as EventListener);
+        gridEl.removeEventListener('touchend', handleTouchEnd as EventListener);
+        gridEl.removeEventListener('touchmove', handleTouchMove as EventListener);
       }
     };
   }, [handleMove]);
