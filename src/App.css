@@ -841,33 +841,30 @@ html, body {
   white-space: nowrap;
 }
 
-/* ===== 鼓励提示 ===== */
+/* ===== 鼓励提示 - 分数下方行内显示 ===== */
 .encouragement-toast {
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 24px;
-  border-radius: 28px;
-  font-size: 15px;
-  font-weight: 800;
-  z-index: 20;
-  white-space: nowrap;
-  animation: toastSlide 0.5s var(--transition-bounce);
+  height: 20px;
+  line-height: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
   pointer-events: none;
-  box-shadow: var(--shadow-md);
+  white-space: nowrap;
+  animation: encourageFadeInOut 2.5s ease forwards;
 }
 
-@keyframes toastSlide {
-  0% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(0.9); }
-  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+@keyframes encourageFadeInOut {
+  0% { opacity: 0; transform: translateY(-4px); }
+  15% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-4px); }
 }
 
-.encouragement-speed { background: linear-gradient(135deg, #ff5722 0%, #ff7043 100%); color: white; }
-.encouragement-combo { background: linear-gradient(135deg, #9c27b0 0%, #ab47bc 100%); color: white; }
-.encouragement-steady { background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%); color: white; }
-.encouragement-idle { background: linear-gradient(135deg, #9e9e9e 0%, #bdbdbd 100%); color: white; }
-.encouragement-record { background: linear-gradient(135deg, #ffc107 0%, #ffd54f 100%); color: #333; }
+.encouragement-speed { color: #ff5722; }
+.encouragement-combo { color: #9c27b0; }
+.encouragement-steady { color: #2196f3; }
+.encouragement-idle { color: #9e9e9e; }
+.encouragement-record { color: #f57f17; }
 
 /* ===== 覆盖层（游戏结束/胜利） ===== */
 .game-overlay {

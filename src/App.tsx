@@ -105,7 +105,7 @@ function GameContent() {
   const showEncouragement = useCallback((text: string, type: string) => {
     setEncouragement({ text, type });
     if (encourageTimerRef.current) clearTimeout(encourageTimerRef.current);
-    encourageTimerRef.current = setTimeout(() => setEncouragement(null), 2000);
+    encourageTimerRef.current = setTimeout(() => setEncouragement(null), 2500);
   }, []);
 
   // 空闲检测
@@ -465,18 +465,18 @@ function GameContent() {
         </span>
       </button>
 
+      {/* 鼓励提示 - 在分数下方独立显示 */}
+      {encouragement && (
+        <div className={`encouragement-toast encouragement-${encouragement.type}`}>
+          {encouragement.text}
+        </div>
+      )}
+
       {/* 游戏网格 */}
       <div className={`grid-container ${isShaking ? 'grid-shake' : ''}`}>
         <div className="grid">
           {gameState.grid.map((row, i) => row.map((cell, j) => renderTile(cell, i, j)))}
         </div>
-
-        {/* 鼓励提示 */}
-        {encouragement && (
-          <div className={`encouragement-toast encouragement-${encouragement.type}`}>
-            {encouragement.text}
-          </div>
-        )}
 
         {/* 游戏结束 */}
         {gameState.isGameOver && !showStatsReport && (
