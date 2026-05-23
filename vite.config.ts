@@ -6,4 +6,5 @@ export default defineConfig({
   plugins: [react()],
   root: '.',
   publicDir: 'public',
+  base: '/game-2048/',
 })
